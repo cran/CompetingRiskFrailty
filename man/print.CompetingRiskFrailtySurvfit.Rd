@@ -4,7 +4,8 @@
 \description{Prints estimates of fixed parameters of smoothing varying coefficients, penalty values for their random parts 
 as well as mixture weights of frailty mixture distribution, their degrees of feedom and optimal AIC- and marginal log likelihood value of the model.
 }
-\usage{print.CompetingRiskFrailtySurvfit(x,...)
+\usage{
+\method{print}{CompetingRiskFrailtySurvfit}(x,\dots)
 }
 \arguments{
   \item{x}{  object of class 'CompetingRiskFrailtySurvfit'.}

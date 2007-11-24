@@ -13,7 +13,7 @@ CompetingRiskFrailtyOptim<-function(data.set=data.set,control=control,form=formu
 ####################################################################################
 ginverse<-function(X,tol=1e-100)
 {
-Xsvd<-svd(X,LINPACK=T)
+Xsvd<-svd(X,LINPACK=TRUE)
 if (is.complex(X)) Xsvd$u<-Conj(Xsvd$u)
 Positive<-Xsvd$d > max(tol * Xsvd$d[1], 0)
 if (all(Positive)) Xsvd$v %*% (1/Xsvd$d * t(Xsvd$u))
@@ -42,7 +42,7 @@ survival.to.poisson.frailty<-function(time=time, status.risk=status.risk, x=NULL
 {  
 event.time<-time[status.risk==1]
 #specify number of integration points (not to be too large beacuse of computation)
-if (length(unique(event.time)) < 30) grid<-c(unique(sort(event.time)),max(time+1)) else grid<-c(sort(sample(unique(time[status==1]),30)),max(time+1))
+if (length(unique(event.time)) < 30) grid<-c(unique(sort(event.time)),max(time+1)) else grid<-c(sort(sample(unique(time[status.risk==1]),30)),max(time+1))
 m<-length(grid)
 grid.minus1<-c(0,grid[1:(m-1)])
 grid.plus1<-c(grid[2:m],max(time)+2)
@@ -55,7 +55,7 @@ Xt<-lapply(seq(time),FUN=function(ij) kronecker(matrix(1,Mt[ij],1),t(matrix(as.m
 Xt<-eval(parse(text=paste("rbind(",paste("Xt[[",1:length(Xt),"]]",sep="",collapse=","),")",sep="")))
 #offset
 Ot.list<-lapply(seq(time),FUN=function(ij) log(0.5*(apply(cbind(grid.plus1[1:Mt[ij]],rep(time[ij],Mt[ij])),MARGIN=1,FUN=min) - apply(cbind(grid.minus1[1:Mt[ij]],rep(time[ij],Mt[ij])),MARGIN=1,FUN=min))))
-#beachte: diese berechnung von offset weicht geringfügig am rechten rand von der angegebenen formel ab                
+#beachte: diese berechnung von offset weicht geringfgig am rechten rand von der angegebenen formel ab                
 return(list(grid=grid,y.list=yt.list,m.list=Mt.list,o.list=Ot.list,x=Xt))   
 }
 
@@ -69,7 +69,7 @@ primal.dual<-function(penalty.cc,cc,lambda,nu)
 ###############################################
 #ziel.funktion definieren, (= -log.lik)########
 ###############################################
-funktion.wert<-function(cc) {-sum(apply(matrix(cc,nrow=nrow(Delta.i.m),ncol=length(cc),byrow=T)*Delta.i.m,1,FUN=function(zeile) log(sum(zeile)))) + 0.5*penalty.cc*t(cc)%*%Nabla.penalty%*%(cc)}
+funktion.wert<-function(cc) {-sum(apply(matrix(cc,nrow=nrow(Delta.i.m),ncol=length(cc),byrow=TRUE)*Delta.i.m,1,FUN=function(zeile) log(sum(zeile)))) + 0.5*penalty.cc*t(cc)%*%Nabla.penalty%*%(cc)}
   
 ################################
 #residuen.funktion definieren###
@@ -77,7 +77,7 @@ funktion.wert<-function(cc) {-sum(apply(matrix(cc,nrow=nrow(Delta.i.m),ncol=leng
 residuen<-function(cc,lambda,nu)  #residuen.vektor bestimmen
   {
 #Delta.i.m ist matrix mit dim=c(N,M)
-Delta.i.m.quer<-(1/apply(matrix(cc,nrow=nrow(Delta.i.m),ncol=length(cc),byrow=T)*Delta.i.m,1,FUN=function(x) sum(x)))*Delta.i.m
+Delta.i.m.quer<-(1/apply(matrix(cc,nrow=nrow(Delta.i.m),ncol=length(cc),byrow=TRUE)*Delta.i.m,1,FUN=function(x) sum(x)))*Delta.i.m
 Nabla.f.0<-apply(Delta.i.m.quer,2,FUN=function(x) -sum(x)) + penalty.cc*Nabla.penalty%*%cc
 Nabla.2.f.0<-matrix(0,M,M);for (i in seq(ID.unique)) Nabla.2.f.0<-Nabla.2.f.0 + outer(Delta.i.m.quer[i,],Delta.i.m.quer[i,])
 Nabla.2.f.0<-Nabla.2.f.0 + penalty.cc*Nabla.penalty         
@@ -98,7 +98,7 @@ epsilon.feas<-1e-07;epsilon<-1e-06  #abbruch.kriterien
 m<-length(cc)
 eta.dach<- t(cc)%*%lambda  + 1e-08
 ##############################################
-#parameter für line.search-back.tracking######
+#parameter fr line.search-back.tracking######
 ##############################################
 alpha.backtracking<-0.01
 beta.backtracking<-0.5
@@ -120,7 +120,7 @@ tt<-2*mu/eta.dach
 #Ableitungen bestimmen###############
 #####################################
 #Delta.i.m als matrix darstellen mit dim=c(N,M)
-Delta.i.m.quer<-(1/apply(matrix(cc,nrow=nrow(Delta.i.m),ncol=length(cc),byrow=T)*Delta.i.m,1,FUN=function(x) sum(x)))*Delta.i.m
+Delta.i.m.quer<-(1/apply(matrix(cc,nrow=nrow(Delta.i.m),ncol=length(cc),byrow=TRUE)*Delta.i.m,1,FUN=function(x) sum(x)))*Delta.i.m
 Nabla.f.0<-apply(Delta.i.m.quer,2,FUN=function(x) -sum(x)) + penalty.cc*Nabla.penalty%*%cc
 Nabla.2.f.0<-matrix(0,M,M);for (i in seq(ID.unique)) Nabla.2.f.0<- Nabla.2.f.0+outer(Delta.i.m.quer[i,],Delta.i.m.quer[i,])
 Nabla.2.f.0<-Nabla.2.f.0+penalty.cc*Nabla.penalty
@@ -141,15 +141,15 @@ r.pri<-A%*%cc-b.constr
 ############################
 f.0<-funktion.wert(cc)
 #############################################
-#lösung durch reduzierung####################
+#lï¿½ung durch reduzierung####################
 #############################################
-#berechnung für delta.cc und delta.nu (s. Harville,p.468)
+#berechnung fr delta.cc und delta.nu (s. Harville,p.468)
 H<-Nabla.2.f.0+Nabla.2.f.i.summe+diag(lambda/cc)
 #H<-Nabla.2.f.0+Nabla.2.f.i.summe-t(Nabla.f.i)%*%qr.solve(diag(f.i))%*%diag(lambda)%*%Nabla.f.i
 b<- -(r.dual+t(Nabla.f.i)%*%ginverse(diag(f.i),tol=1e-100)%*%r.cent)
 d<- -r.pri
 #k<-1000
-#W<-ginverse(H+k*t(A)%*%A,tol=1e-100)  #hier U=Id, aber zur stabilität nehme z.B U=k*Id mit k=1000
+#W<-ginverse(H+k*t(A)%*%A,tol=1e-100)  #hier U=Id, aber zur stabilitï¿½ nehme z.B U=k*Id mit k=1000
 W<-qr.solve(H+t(A)%*%A,tol=1e-100)
 TT<-ginverse(A%*%W%*%t(A),tol=1e-100)%*%(A%*%W%*%b-d)
 #delta.nu<-as.vector(TT+k*d)
@@ -210,8 +210,8 @@ names(ID.unique)<-1:length(ID.unique)
 #################################################################
 #define for each risk type the spline knots for spline bases#####
 #################################################################
-L<-length(grep("status",names(data.set),fix=T))
-Status.names<-names(data.set[,grep("status",names(data.set),fix=T),drop=F])
+L<-length(grep("status",names(data.set),fix=TRUE))
+Status.names<-names(data.set[,grep("status",names(data.set),fix=TRUE),drop=FALSE])
 knots.t<-list()
 for (l in 1:L)
 {if (length(grep("num.knots",names(control)))==0)  knots.t[[l]]<-default.knots(data.set$time[eval(parse(text=paste("data.set$",Status.names[l],sep="")))==1])
@@ -225,7 +225,7 @@ K.t<-lapply(knots.t,FUN=function(x) length(x))
 ############################################################
 #indicator matrix with elementes d.ijl as values############
 ############################################################
-D.ijl<-data.set[,grep("status",names(data.set),fix=T),drop=F] 
+D.ijl<-data.set[,grep("status",names(data.set),fix=TRUE),drop=FALSE] 
 
 
 
@@ -235,7 +235,7 @@ D.ijl<-data.set[,grep("status",names(data.set),fix=T),drop=F]
 #N.B.!!! the  reference categories for factors should be defined in the analizied data set bevore applied#####
 ##############################################################################################################
 if (length(attributes(terms(form))$term.labels) == 0)
-model.matrix.x<-model.matrix(~numeric(nrow(data.set)))[,1,drop=F] else
+model.matrix.x<-model.matrix(~numeric(nrow(data.set)))[,1,drop=FALSE] else
 model.matrix.x<-model.matrix(formula(paste("~",paste(attributes(terms(form))$term.labels,collapse="+"))),data=data.set)
 
 
@@ -281,7 +281,7 @@ Z.time<-lapply(1:L,FUN=function(l) unlist(Z.time.list[[l]]))
 if (p > 0)
   {
 #for covariates
-variables.time<-lapply(1:L,FUN=function(l) Design.variables[[l]][,2:ncol(Design.variables[[l]]),drop=F]*Z.time[[l]])
+variables.time<-lapply(1:L,FUN=function(l) Design.variables[[l]][,2:ncol(Design.variables[[l]]),drop=FALSE]*Z.time[[l]])
 for (l in 1:L) colnames(variables.time[[l]])<-paste("variables.time.",colnames(Design.variables[[l]])[2:ncol(Design.variables[[l]])],sep="")
 
 beta.start<-lapply(1:L,FUN=function(l) coef(glm(as.formula(paste("unlist(y.poisson.list[[l]])~",paste(c("Z.time[[l]]",paste(colnames(Design.variables[[l]])[2:ncol(Design.variables[[l]])],sep="",collapse="+"),paste(colnames(variables.time[[l]]),sep="",collapse="+"),paste("offset(unlist(offset.list[[",l,"]]))",sep="")),collapse="+"))),data=data.frame(Design.variables[[l]],variables.time[[l]]),family=poisson)))
@@ -407,7 +407,7 @@ Basis.t.list[[l]]<-outer(Z.time[[l]],knots.t[[l]],FUN="-")
 Basis.t.list[[l]]<-Basis.t.list[[l]]*(Basis.t.list[[l]]>0)
 if ( p > 0)
  {
-variables.t[[l]]<-Design.variables[[l]][,2:ncol(Design.variables[[l]]),drop=F]
+variables.t[[l]]<-Design.variables[[l]][,2:ncol(Design.variables[[l]]),drop=FALSE]
 Design.matrix.t.list[[l]]<-cbind(1,Z.time[[l]],Basis.t.list[[l]],eval(parse(text=paste("cbind(",paste("variables.t[[l]][,",1:p,"]*cbind(1,Z.time[[l]],Basis.t.list[[l]])",sep="",collapse=","),")"))))
  } else
 Design.matrix.t.list[[l]]<-cbind(1,Z.time[[l]],Basis.t.list[[l]])
@@ -586,17 +586,17 @@ for (l in 1:L)
 lambda.ijl<-exp(Design.matrix.t.list[[l]]%*%teta[[l]]+unlist(offset.list[[l]]))
 #for each cluster i define aggregated number of poisson data (through all spells j=1...ni)
 help.lapply<-lapply(ID.unique,FUN=function(i) {help.number<-cumsum(unlist(m.list[[l]][data.set$ID==i]));help.number[length(help.number)]})
-#indiziere geeignet für jedes cluster
+#indiziere geeignet fr jedes cluster
 help.cut<-cumsum(unlist(help.lapply))   
-help.matrix<-cbind(c(0,help.cut[-length(help.cut)])+1,help.cut)  #bildet die indizes.matrix für das jeweilige individuum
+help.matrix<-cbind(c(0,help.cut[-length(help.cut)])+1,help.cut)  #bildet die indizes.matrix fr das jeweilige individuum
 indizes<-lapply(seq(ID.unique),FUN=function(i) help.matrix[i,1]:help.matrix[i,2]) #jeweilige index.vektoren
-#zum i-ten Cluster zugehöriger vektor der lambda.ijl
+#zum i-ten Cluster zugehï¿½iger vektor der lambda.ijl
 lambda.ijl.list[[l]]<-lapply(indizes,FUN=function(ind) lambda.ijl[ind])
-#summierte lambda über j und K für jedes t-te Cluster
+#summierte lambda ber j und K fr jedes t-te Cluster
 lambda.sum[,l]<-sapply(lambda.ijl.list[[l]],FUN=function(x) sum(x))
 #die k=K.ij bei jeweiligen spells des i-ten individuums
 lambda.ijl.K.ij<-lambda.ijl[cumsum(unlist(m.list[[l]]))]
-#die zum i-ten Cluster gehören,  zusamen.gefasst
+#die zum i-ten Cluster gehï¿½en,  zusamen.gefasst
 lambda.ijl.K.ij.list[[l]]<-lapply(ID.unique,FUN=function(i) lambda.ijl.K.ij[data.set$ID==i])
 }
 lambda.prod<-unlist(lapply(seq(ID.unique),FUN=function(i) {product.l<-c(); for (l in 1:L) product.l[l]<-prod(lambda.ijl.K.ij.list[[l]][[i]]^D.ijl[data.set$ID==as.numeric(ID.unique[names(ID.unique)==i]),l]);prod(product.l)}))
@@ -630,7 +630,7 @@ exp.gamma.prod<-t(apply(exp.gamma,c(1,3),"prod"))
 ##########################################################
 #combine to the matrix Delta (i-->rows,m-->columns)#######
 ##########################################################
-Delta.i.m<-exp.gamma.prod*matrix(lambda.prod,ncol=ncol(exp.gamma.prod),nrow=nrow(exp.gamma.prod),byrow=F)
+Delta.i.m<-exp.gamma.prod*matrix(lambda.prod,ncol=ncol(exp.gamma.prod),nrow=nrow(exp.gamma.prod),byrow=FALSE)
 
 
 ############################
@@ -643,8 +643,8 @@ cc<-primal.dual(penalty.cc,as.vector(cc+1e-05),lambda,nu)$cc
 ######################################################
 #marginal weights c.(l)ml#############################
 ######################################################
-Delta.i.m.quer<-(1/apply(matrix(cc,nrow=nrow(Delta.i.m),ncol=length(cc),byrow=T)*Delta.i.m,1,FUN=function(x) sum(x)))*Delta.i.m
-cc.tilde.i<-matrix(cc,nrow=nrow(Delta.i.m),ncol=length(cc),byrow=T)*Delta.i.m.quer             
+Delta.i.m.quer<-(1/apply(matrix(cc,nrow=nrow(Delta.i.m),ncol=length(cc),byrow=TRUE)*Delta.i.m,1,FUN=function(x) sum(x)))*Delta.i.m
+cc.tilde.i<-matrix(cc,nrow=nrow(Delta.i.m),ncol=length(cc),byrow=TRUE)*Delta.i.m.quer             
 c.l.ml.i<-lapply(seq(ID.unique),FUN=function(i) lapply(1:L,FUN=function(l) lapply(1:M.list[[l]],FUN=function(m.l) sum(cc.tilde.i[i,index.matrix[,l]==m.l]))))
 
 
@@ -707,7 +707,7 @@ if (p > 0) for (k in 1:p) index.vector[[l]]<-c(index.vector[[l]],(2+K.t[[l]]+2*k
 variance.epoch<-list()   #writes out the variances(=1/penalty) of random components of varying coefficients (from each epoch iteration)
 
 #############################################################
-#für jeden Ausfall.typ l=1...L###############################
+#fr jeden Ausfall.typ l=1...L###############################
 #############################################################
 for (l in 1:L)
 {
@@ -742,10 +742,10 @@ teta.t[[l]]<-teta.t.new
 names(teta.t[[l]])<-names(teta.t.new)    
 teta[[l]]<-c(teta.t[[l]])
 #update fixed components beta
-beta.t.intercept[[l]]<-teta.t[[l]][grep("beta.t.intercept",names(teta.t[[l]]),fixed=T)]
-beta.t.slope[[l]]<-teta.t[[l]][grep("beta.t.slope",names(teta.t[[l]]),fixed=T)]
+beta.t.intercept[[l]]<-teta.t[[l]][grep("beta.t.intercept",names(teta.t[[l]]),fixed=TRUE)]
+beta.t.slope[[l]]<-teta.t[[l]][grep("beta.t.slope",names(teta.t[[l]]),fixed=TRUE)]
 #update random components u
-u.t[[l]]<-teta.t[[l]][grep("u.t",names(teta.t[[l]]),fixed=T)]
+u.t[[l]]<-teta.t[[l]][grep("u.t",names(teta.t[[l]]),fixed=TRUE)]
 
 
 
@@ -768,7 +768,7 @@ inverse.I.t.pen.u.t<-qr.solve(I.t.pen.u.t,tol=1e-100)
 #update of penalties
 variance.penalty.t.new<-c()
 #baseline
-variance.penalty.t.new[1]<-(sum(diag(inverse.I.t.pen.u.t[1:K.t[[l]],1:K.t[[l]]]))+sum(u.t[[l]][grep("Baseline",names(u.t[[l]]),fixed=T)]^2))/K.t[[l]]
+variance.penalty.t.new[1]<-(sum(diag(inverse.I.t.pen.u.t[1:K.t[[l]],1:K.t[[l]]]))+sum(u.t[[l]][grep("Baseline",names(u.t[[l]]),fixed=TRUE)]^2))/K.t[[l]]
 #covariates
 if (p > 0)  for (k in 1:p)
 variance.penalty.t.new[k+1]<-(sum(diag(inverse.I.t.pen.u.t[(k*K.t[[l]]+1):((k+1)*K.t[[l]]),(k*K.t[[l]]+1):((k+1)*K.t[[l]])]))+sum(u.t[[l]][(k*K.t[[l]]+1):((k+1)*K.t[[l]])]^2))/K.t[[l]]
@@ -812,8 +812,8 @@ variance.epoch[[l]]<-variance.epoch.l[[epoch+1]]
 #marginal log likelihood (all random components integrated out from the model)###################
 #(s. supplemented paper)#########################################################################
 #################################################################################################
-I.part<-sum(apply(matrix(cc,nrow=nrow(Delta.i.m),ncol=length(cc),byrow=T)*Delta.i.m,1,FUN=function(zeile) log(sum(zeile))))
-II.part<-0.5*sum(sapply(1:L,FUN=function(l) as.vector(-t(u.t[[l]])%*%Lambda.t[[l]][index.vector[[l]],index.vector[[l]]]%*%u.t[[l]]) + sum(log(eigen(Lambda.t[[l]][index.vector[[l]],index.vector[[l]]],only.values=T)$values)) - sum(log(eigen(I.t.frailty.1[[l]],only.values=T)$values))))
+I.part<-sum(apply(matrix(cc,nrow=nrow(Delta.i.m),ncol=length(cc),byrow=TRUE)*Delta.i.m,1,FUN=function(zeile) log(sum(zeile))))
+II.part<-0.5*sum(sapply(1:L,FUN=function(l) as.vector(-t(u.t[[l]])%*%Lambda.t[[l]][index.vector[[l]],index.vector[[l]]]%*%u.t[[l]]) + sum(log(eigen(Lambda.t[[l]][index.vector[[l]],index.vector[[l]]],only.values=TRUE)$values)) - sum(log(eigen(I.t.frailty.1[[l]],only.values=TRUE)$values))))
 
 log.lik.margin<-c(log.lik.margin,I.part+II.part)
 if (control$print.log.lik) cat("\n\n","log.lik.margin =",I.part+II.part,"\n\n")
@@ -965,7 +965,7 @@ for (l in 1:L) assign(paste("alpha.t.risk.",l,sep=""),vector(mode="list",length=
 #Baseline
 for (l in 1:L)
 {
-help.vector<-as.vector(cbind(1,grid.t.list[[l]])%*%get(paste("estimate.beta.t.risk.",l,sep=""))[grep("Baseline",names(get(paste("estimate.beta.t.risk.",l,sep=""))),fixed=T)]+B.grid.t.list[[l]]%*%u.t[[l]][grep("Baseline",names(u.t[[l]]),fixed=T)]) 
+help.vector<-as.vector(cbind(1,grid.t.list[[l]])%*%get(paste("estimate.beta.t.risk.",l,sep=""))[grep("Baseline",names(get(paste("estimate.beta.t.risk.",l,sep=""))),fixed=TRUE)]+B.grid.t.list[[l]]%*%u.t[[l]][grep("Baseline",names(u.t[[l]]),fixed=TRUE)]) 
 eval(parse(text=paste("alpha.t.risk.",l,"[[1]]","<-","help.vector",sep="")))   
 }
 #covariates
@@ -974,7 +974,7 @@ for (l in 1:L)
   {
   for (k in 1:p)
   {
-help.vector<-as.vector(cbind(1,grid.t.list[[l]])%*%c(beta.t.intercept[[l]][grep(paste("beta.t.intercept.",colnames(Design.variables[[l]])[k+1],sep=""),names(beta.t.intercept[[l]]),fixed=T)],beta.t.slope[[l]][grep(paste("beta.t.slope.",colnames(Design.variables[[l]])[k+1],sep=""),names(beta.t.slope[[l]]),fixed=T)])+B.grid.t.list[[l]]%*%u.t[[l]][grep(paste("u.t.",colnames(Design.variables[[l]])[k+1],sep=""),names(u.t[[l]]),fixed=T)])
+help.vector<-as.vector(cbind(1,grid.t.list[[l]])%*%c(beta.t.intercept[[l]][grep(paste("beta.t.intercept.",colnames(Design.variables[[l]])[k+1],sep=""),names(beta.t.intercept[[l]]),fixed=TRUE)],beta.t.slope[[l]][grep(paste("beta.t.slope.",colnames(Design.variables[[l]])[k+1],sep=""),names(beta.t.slope[[l]]),fixed=TRUE)])+B.grid.t.list[[l]]%*%u.t[[l]][grep(paste("u.t.",colnames(Design.variables[[l]])[k+1],sep=""),names(u.t[[l]]),fixed=TRUE)])
 eval(parse(text=paste("alpha.t.risk.",l,"[[",k+1,"]]","<-","help.vector",sep="")))   
   }  
 }

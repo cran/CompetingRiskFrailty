@@ -40,7 +40,7 @@ m$risk.names<-NULL
 m[[1]] <- as.name("model.frame")
 m <- eval(m, parent.frame()) 
 n <- nrow(m)
-Y <- model.extract(m, response)   #Y has named columns: ID, time, Risk.indicators as status.1,...,status.k
+Y <- model.extract(m, "response")   #Y has named columns: ID, time, Risk.indicators as status.1,...,status.k
 if (!inherits(Y,"CompetingRiskFrailtySurv")) stop("Response must be a survival object with specified survival time, birth time and censor indicator")
 ll <- attr(Terms, "term.labels")
 if (length(ll) == 0)  {X <- as.data.frame(rep(1, n));names(X)<-"Intercept"}  else X <- m[ll]  #X consists of covariates

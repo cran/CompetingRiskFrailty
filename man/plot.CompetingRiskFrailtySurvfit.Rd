@@ -4,7 +4,8 @@
 \description{'plot.CompetingRiskFrailtySurvfit' is a proposed function for plotting of smooth components of the model,
 one plot for each baseline and covariate (or factor level) effect, for each competing risk.
 }
-\usage{plot.CompetingRiskFrailtySurvfit(x,...)
+\usage{
+\method{plot}{CompetingRiskFrailtySurvfit}(x,\dots)
 }
 \arguments{
  \item{x}{object of class 'CompetingRiskFrailtySurvfit'.}

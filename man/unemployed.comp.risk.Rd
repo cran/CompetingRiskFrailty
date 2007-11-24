@@ -4,7 +4,7 @@
 \title{Sample of German Unemployed}
 \description{This data give the time spent in the unemployment spell and two competing risks: full time and part time reemployment
 as possible resulting states for leaving that spell for a sample of german unemployed individuals. The full data have been recieved from the 
-\emph{Deutsches Institut für Wirtschaftsforschung}, s. \url{www.diw.de} and were analysed in the larger study. 
+\emph{Deutsches Institut fuer Wirtschaftsforschung}, s. \url{www.diw.de} and were analysed in the larger study. 
 }
 \usage{data(unemployed.comp.risk)
 }
